@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orto Piccolo · Rotazione Colture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Libre+Franklin:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2c2a1f;
+    --paper:#efe3c8;
+    --paper-deep:#e4d5ae;
+    --soil:#5b3a29;
+    --soil-light:#7a5138;
+    --leaf:#4b6b43;
+    --mustard:#c99a2e;
+    --mustard-light:#e8c96a;
+    --slate:#4c6b8a;
+    --danger:#a8432f;
+    --path:#c9beA4;
+    --white:#fffaf0;
+    --radius-sm:6px;
+    --radius-md:12px;
+    --radius-lg:20px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:radial-gradient(circle at 1px 1px, rgba(91,58,41,0.06) 1px, transparent 0);
+    background-size:22px 22px;
+    color:var(--ink);
+    font-family:'Libre Franklin', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  h1,h2,h3{font-family:'Fraunces', serif; margin:0; color:var(--soil);}
+
+  header.top{
+    padding:28px 20px 18px;
+    border-bottom:2px solid var(--soil);
+  }
+  header.top h1{font-size:clamp(1.5rem, 4vw, 2.1rem); font-weight:600;}
+  header.top .sub{font-size:0.92rem; color:var(--soil-light); font-style:italic; margin-top:4px;}
+
+  main{
+    max-width:1180px; margin:0 auto; padding:24px 20px 60px;
+    display:grid; grid-template-columns:1.4fr 1fr; gap:24px; align-items:start;
+  }
+  @media (max-width:880px){ main{grid-template-columns:1fr;} }
+
+  .card{
+    background:var(--white); border:1px solid var(--paper-deep);
+    border-radius:var(--radius-lg); box-shadow:0 2px 0 rgba(91,58,41,0.08); padding:18px;
+  }
+  .map-card{position:sticky; top:16px;}
+  @media (max-width:880px){.map-card{position:static;}}
+
+  .map-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; flex-wrap:wrap; gap:8px;}
+  .map-head h2{font-size:1.15rem;}
+  .measure-tag{
+    font-family:'IBM Plex Mono', monospace; font-size:0.76rem; color:var(--soil);
+    background:var(--paper); border:1px dashed var(--soil-light); border-radius:20px; padding:3px 10px;
+  }
+
+  svg#plotSvg{width:100%; height:auto; display:block;}
+  .bed{ stroke:var(--soil); stroke-width:1.3; cursor:pointer; transition:filter 0.15s ease, stroke-width 0.15s ease; }
+  .bed:hover{filter:brightness(1.08); stroke-width:2.2;}
+  .bed.selected{stroke:var(--danger); stroke-width:2.8;}
+  .bed-label{ font-family:'IBM Plex Mono', monospace; font-size:12px; fill:var(--ink); pointer-events:none; text-anchor:middle; }
+  .path-rect{ fill:var(--path); stroke:var(--soil-light); stroke-width:0.6; stroke-dasharray:2,2; }
+  .path-label{ font-family:'IBM Plex Mono', monospace; font-size:9px; fill:var(--soil-light); text-anchor:middle; }
+  .section-title{ font-family:'Fraunces', serif; font-weight:600; font-size:17px; fill:var(--soil); }
+
+  .legend{display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:14px; font-size:0.78rem;}
+  .legend-item{display:flex; align-items:center; gap:6px;}
+  .legend-swatch{width:11px; height:11px; border-radius:3px; display:inline-block; border:1px solid rgba(0,0,0,0.15);}
+
+  .tabs{display:flex; gap:4px; margin-bottom:14px; flex-wrap:wrap;}
+  .tab-btn{
+    font-family:'IBM Plex Mono', monospace; font-size:0.78rem; background:var(--paper);
+    border:1px solid var(--paper-deep); border-radius:20px; padding:6px 14px; cursor:pointer; color:var(--soil);
+  }
+  .tab-btn.active{background:var(--soil); color:var(--white); border-color:var(--soil);}
+  .panel-empty{color:var(--soil-light); font-style:italic; font-size:0.95rem; padding:20px 4px;}
+  .bed-title{display:flex; align-items:center; gap:8px; margin-bottom:14px;}
+  .bed-title input{
+    font-family:'Fraunces', serif; font-size:1.1rem; font-weight:600; color:var(--soil);
+    border:none; border-bottom:1.5px dashed var(--paper-deep); background:transparent; padding:2px 0; max-width:220px;
+  }
+  .bed-title input:focus{outline:none; border-color:var(--mustard);}
+  .rename-hint{font-size:0.68rem; color:var(--soil-light);}
+
+  label.field{display:block; margin-bottom:12px; font-size:0.85rem; color:var(--soil);}
+  label.field span{display:block; margin-bottom:4px; font-weight:600;}
+  select, input[type=text], input[type=number], textarea{
+    width:100%; font-family:'Libre Franklin', sans-serif; font-size:0.9rem; padding:8px 10px;
+    border:1.5px solid var(--paper-deep); border-radius:var(--radius-sm); background:var(--white); color:var(--ink);
+  }
+  select:focus, input:focus, textarea:focus{outline:none; border-color:var(--mustard);}
+  textarea{resize:vertical; min-height:56px;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+
+  .btn{
+    font-family:'IBM Plex Mono', monospace; font-size:0.82rem; border:none; border-radius:20px;
+    padding:9px 18px; cursor:pointer; background:var(--mustard); color:var(--soil); font-weight:500;
+  }
+  .btn:hover{background:var(--mustard-light);}
+  .btn.secondary{background:transparent; border:1.5px solid var(--soil); color:var(--soil);}
+  .btn.small{padding:5px 12px; font-size:0.72rem;}
+  .btn.danger-outline{background:transparent; border:1.5px solid var(--danger); color:var(--danger);}
+
+  .warning-banner{
+    background:#f6e2d9; border:1.5px solid var(--danger); color:#7a2f1c; border-radius:var(--radius-sm);
+    padding:10px 12px; font-size:0.82rem; margin-bottom:12px; display:flex; gap:8px; align-items:flex-start;
+  }
+  .history-item{border-left:3px solid var(--mustard); padding:6px 0 6px 12px; margin-bottom:10px; font-size:0.88rem;}
+  .history-item .when{font-family:'IBM Plex Mono', monospace; font-size:0.75rem; color:var(--soil-light);}
+  .history-item .what{font-weight:600; color:var(--soil);}
+  .history-item .fam{font-size:0.75rem; color:var(--leaf);}
+  .history-item .note{font-size:0.8rem; color:var(--ink); margin-top:2px;}
+  .history-empty{font-style:italic; color:var(--soil-light); font-size:0.85rem;}
+
+  .modal-backdrop{position:fixed; inset:0; background:rgba(44,42,31,0.45); display:none; align-items:center; justify-content:center; z-index:50; padding:20px;}
+  .modal-backdrop.open{display:flex;}
+  .modal{background:var(--white); border-radius:var(--radius-lg); padding:22px; max-width:480px; width:100%; max-height:85vh; overflow-y:auto; border:1px solid var(--paper-deep);}
+  .modal h2{margin-bottom:14px; font-size:1.2rem;}
+  .crop-row{display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--paper); font-size:0.85rem;}
+  .crop-row .fam-tag{font-family:'IBM Plex Mono', monospace; font-size:0.68rem; background:var(--paper); border-radius:10px; padding:2px 8px; margin-left:8px; color:var(--soil);}
+  .add-crop-form{display:flex; gap:6px; margin-top:14px; flex-wrap:wrap;}
+  .add-crop-form input{flex:1; min-width:120px;}
+  .add-crop-form select{flex:1; min-width:120px;}
+  .top-actions{display:flex; justify-content:flex-end; margin-bottom:10px; gap:8px;}
+  .close-x{cursor:pointer; float:right; font-family:'IBM Plex Mono',monospace; color:var(--soil-light); font-size:0.9rem;}
+
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--soil); color:var(--white);
+    padding:9px 20px; border-radius:20px; font-size:0.82rem; font-family:'IBM Plex Mono', monospace; z-index:80;
+    opacity:0; pointer-events:none; transition:opacity 0.25s ease;
+  }
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>🌱 Orto Piccolo — Rotazione Colture</h1>
+  <div class="sub">Mappa a misura reale · 16 aiuole + vialetti</div>
+</header>
+
+<main>
+  <section class="card map-card">
+    <div class="map-head">
+      <h2>Mappa dell'Orto Piccolo</h2>
+      <span class="measure-tag mono">16 aiuole · proporzioni reali da Excel</span>
+    </div>
+
+    <svg id="plotSvg" viewBox="0 0 940 260" xmlns="http://www.w3.org/2000/svg">
+      <text x="60" y="52" class="section-title">Orto Piccolo</text>
+
+      <!-- vialetti (percorsi) -->
+      <g id="pathsGroup"></g>
+      <!-- aiuole -->
+      <g id="bedsGroup"></g>
+    </svg>
+
+    <div class="legend" id="legend">
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--path)"></span>Vialetto</div>
+    </div>
+  </section>
+
+  <section class="card" id="sidePanel">
+    <div class="top-actions">
+      <button class="btn secondary small" id="openCropsBtn">🌿 Gestisci colture</button>
+    </div>
+    <div id="panelContent">
+      <div class="panel-empty">Tocca un'aiuola sulla mappa per registrare o consultare le semine.</div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-backdrop" id="cropModalBackdrop">
+  <div class="modal">
+    <span class="close-x" id="closeCropModal">✕ chiudi</span>
+    <h2>Colture disponibili</h2>
+    <div id="cropList"></div>
+    <div class="add-crop-form">
+      <input type="text" id="newCropName" placeholder="Nome coltura">
+      <select id="newCropFamily"></select>
+      <button class="btn small" id="addCropBtn">Aggiungi</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+/* ==========================================================
+   CONFIGURAZIONE FIREBASE
+   Sostituisci con la configurazione del tuo progetto.
+   Le collezioni usano lo stesso prefisso "orto_" del file
+   principale, così in futuro i dati potranno convivere.
+   Import dinamico e protetto: la mappa si disegna comunque
+   anche se Firebase non è (ancora) configurato.
+   ========================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDeQQGPDAPHgS5o4nrXJJpo5E06wVPlCH8",
+  authDomain: "orto-pratieghi.firebaseapp.com",
+  projectId: "orto-pratieghi",
+  storageBucket: "orto-pratieghi.firebasestorage.app",
+  messagingSenderId: "593106886772",
+  appId: "1:593106886772:web:7edf500b2a1939bd3ab121"
+};
+
+let firebaseReady = false;
+let db = null;
+let FB = null;
+let bedsCol = null, plantingsCol = null, cropsCol = null;
+
+async function setupFirebase(){
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+    const fsMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    const app = initializeApp(firebaseConfig);
+    db = fsMod.getFirestore(app);
+    FB = fsMod;
+    bedsCol = FB.collection(db, "orto_beds");
+    plantingsCol = FB.collection(db, "orto_plantings");
+    cropsCol = FB.collection(db, "orto_crops");
+    firebaseReady = true;
+  } catch(err){
+    console.error("Firebase non disponibile:", err);
+    firebaseReady = false;
+  }
+}
+function requireFirebase(){
+  if(!firebaseReady){ showToast("Firebase non collegato — vedi le istruzioni nel file"); return false; }
+  return true;
+}
+
+/* ==========================================================
+   AIUOLE E VIALETTI — misure esatte ricavate dal foglio Excel
+   (larghezza colonne / altezza righe reali, scala 1.2, margine 60/70)
+   ========================================================== */
+const BED_DEFS = [
+  { id:"piccolo-20", defaultName:"Aiuola 20", x:60.0,  y:70.0,  w:70.8, h:46.4 },
+  { id:"piccolo-1",  defaultName:"Aiuola 1",  x:177.6, y:70.0,  w:88.8, h:46.4 },
+  { id:"piccolo-2",  defaultName:"Aiuola 2",  x:266.4, y:70.0,  w:70.8, h:46.4 },
+  { id:"piccolo-3",  defaultName:"Aiuola 3",  x:384.0, y:70.0,  w:88.8, h:46.4 },
+  { id:"piccolo-4",  defaultName:"Aiuola 4",  x:472.8, y:70.0,  w:70.8, h:46.4 },
+  { id:"piccolo-5",  defaultName:"Aiuola 5",  x:590.4, y:70.0,  w:88.8, h:46.4 },
+  { id:"piccolo-6",  defaultName:"Aiuola 6",  x:679.2, y:70.0,  w:70.8, h:46.4 },
+  { id:"piccolo-22", defaultName:"Aiuola 22", x:796.8, y:70.0,  w:70.8, h:46.4 },
+  { id:"piccolo-21", defaultName:"Aiuola 21", x:60.0,  y:139.6, w:70.8, h:70.4 },
+  { id:"piccolo-7",  defaultName:"Aiuola 7",  x:177.6, y:139.6, w:88.8, h:70.4 },
+  { id:"piccolo-8",  defaultName:"Aiuola 8",  x:266.4, y:139.6, w:70.8, h:70.4 },
+  { id:"piccolo-9",  defaultName:"Aiuola 9",  x:384.0, y:139.6, w:88.8, h:70.4 },
+  { id:"piccolo-10", defaultName:"Aiuola 10", x:472.8, y:139.6, w:70.8, h:70.4 },
+  { id:"piccolo-11", defaultName:"Aiuola 11", x:590.4, y:139.6, w:88.8, h:70.4 },
+  { id:"piccolo-12", defaultName:"Aiuola 12", x:679.2, y:139.6, w:70.8, h:70.4 },
+  { id:"piccolo-23", defaultName:"Aiuola 23", x:796.8, y:139.6, w:70.8, h:70.4 }
+];
+
+// vialetti: 4 verticali (tra le coppie di aiuole) + 1 orizzontale (tra le due file)
+const PATH_DEFS = [
+  { x:130.8, y:70.0,  w:46.8, h:140.0 },
+  { x:337.2, y:70.0,  w:46.8, h:140.0 },
+  { x:543.6, y:70.0,  w:46.8, h:140.0 },
+  { x:750.0, y:70.0,  w:46.8, h:140.0 },
+  { x:60.0,  y:116.4, w:807.6, h:23.2 }
+];
+
+const FAMILY_COLORS = {
+  "Solanacee": "#a8432f", "Cucurbitacee": "#c99a2e", "Leguminose": "#4b6b43",
+  "Brassicacee": "#7d8c5c", "Asteracee": "#8a5a44", "Liliacee": "#9b6bb3",
+  "Ombrellifere": "#4c8a7a", "Chenopodiacee": "#b3894a", "Labiate": "#6f9b6b", "Altro": "#b8ad8f"
+};
+const DEFAULT_CROPS = [
+  { name: "Pomodoro", family: "Solanacee" }, { name: "Melanzana", family: "Solanacee" },
+  { name: "Peperone", family: "Solanacee" }, { name: "Patata", family: "Solanacee" },
+  { name: "Zucchina", family: "Cucurbitacee" }, { name: "Cetriolo", family: "Cucurbitacee" },
+  { name: "Zucca", family: "Cucurbitacee" }, { name: "Melone", family: "Cucurbitacee" },
+  { name: "Fagiolo", family: "Leguminose" }, { name: "Fagiolino", family: "Leguminose" },
+  { name: "Pisello", family: "Leguminose" }, { name: "Fava", family: "Leguminose" },
+  { name: "Cavolo cappuccio", family: "Brassicacee" }, { name: "Cavolfiore", family: "Brassicacee" },
+  { name: "Broccolo", family: "Brassicacee" }, { name: "Rucola", family: "Brassicacee" },
+  { name: "Ravanello", family: "Brassicacee" }, { name: "Insalata/Lattuga", family: "Asteracee" },
+  { name: "Radicchio", family: "Asteracee" }, { name: "Carciofo", family: "Asteracee" },
+  { name: "Cipolla", family: "Liliacee" }, { name: "Aglio", family: "Liliacee" },
+  { name: "Porro", family: "Liliacee" }, { name: "Carota", family: "Ombrellifere" },
+  { name: "Sedano", family: "Ombrellifere" }, { name: "Prezzemolo", family: "Ombrellifere" },
+  { name: "Finocchio", family: "Ombrellifere" }, { name: "Bietola", family: "Chenopodiacee" },
+  { name: "Spinacio", family: "Chenopodiacee" }, { name: "Basilico", family: "Labiate" }
+];
+const MONTHS = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+const ROTATION_YEARS = 3;
+
+let bedNames = {};
+let plantings = [];
+let crops = [];
+let selectedBedId = null;
+let activeTab = "pianta";
+
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 2200);
+}
+function bedLabel(id){
+  return bedNames[id] || BED_DEFS.find(b=>b.id===id)?.defaultName || id;
+}
+function latestPlantingForBed(bedId){
+  const list = plantings.filter(p=>p.bedId===bedId);
+  if(list.length===0) return null;
+  return list.slice().sort((a,b)=> (b.year*12+b.month) - (a.year*12+a.month))[0];
+}
+function findFamilyConflict(bedId, family, year, month){
+  const periodIdx = year*12+month;
+  const sameFamily = plantings
+    .filter(p => p.bedId===bedId && p.family===family)
+    .map(p => ({ ...p, idx: p.year*12+p.month }))
+    .filter(p => p.idx < periodIdx)
+    .sort((a,b)=> b.idx - a.idx);
+  if(sameFamily.length===0) return null;
+  const last = sameFamily[0];
+  const diffYears = (periodIdx - last.idx) / 12;
+  if(diffYears < ROTATION_YEARS) return { last, diffYears };
+  return null;
+}
+
+function renderPaths(){
+  const g = document.getElementById("pathsGroup");
+  g.innerHTML = "";
+  PATH_DEFS.forEach(p=>{
+    const r = document.createElementNS("http://www.w3.org/2000/svg","rect");
+    r.setAttribute("x",p.x); r.setAttribute("y",p.y);
+    r.setAttribute("width",p.w); r.setAttribute("height",p.h);
+    r.setAttribute("class","path-rect");
+    g.appendChild(r);
+  });
+}
+
+function renderBeds(){
+  const g = document.getElementById("bedsGroup");
+  g.innerHTML = "";
+  BED_DEFS.forEach(bed=>{
+    const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+    rect.setAttribute("x", bed.x); rect.setAttribute("y", bed.y);
+    rect.setAttribute("width", bed.w); rect.setAttribute("height", bed.h);
+    rect.setAttribute("rx", 4);
+    rect.setAttribute("class","bed"+(bed.id===selectedBedId ? " selected":""));
+    const latest = latestPlantingForBed(bed.id);
+    const color = latest ? (FAMILY_COLORS[latest.family]||FAMILY_COLORS["Altro"]) : "#f2e2ac";
+    rect.setAttribute("fill", color);
+    rect.addEventListener("click", ()=> selectBed(bed.id));
+    g.appendChild(rect);
+
+    const label = document.createElementNS("http://www.w3.org/2000/svg","text");
+    label.setAttribute("x", bed.x+bed.w/2); label.setAttribute("y", bed.y+bed.h/2+4);
+    label.setAttribute("class","bed-label");
+    label.setAttribute("pointer-events","none");
+    label.textContent = bedLabel(bed.id).replace("Aiuola ","");
+    g.appendChild(label);
+  });
+}
+
+function selectBed(bedId){
+  selectedBedId = bedId; activeTab = "pianta";
+  renderBeds(); renderPanel();
+}
+
+function renderPanel(){
+  const el = document.getElementById("panelContent");
+  if(!selectedBedId){
+    el.innerHTML = `<div class="panel-empty">Tocca un'aiuola sulla mappa per registrare o consultare le semine.</div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="bed-title"><input type="text" id="bedNameInput" value="${bedLabel(selectedBedId)}"></div>
+    <div class="rename-hint">Tocca il nome per rinominare l'aiuola</div>
+    <div class="tabs">
+      <button class="tab-btn ${activeTab==='pianta'?'active':''}" data-tab="pianta">🌱 Pianta qui</button>
+      <button class="tab-btn ${activeTab==='storico'?'active':''}" data-tab="storico">📜 Storico</button>
+    </div>
+    <div id="tabContent"></div>
+  `;
+  document.getElementById("bedNameInput").addEventListener("change", async (e)=>{
+    const newName = e.target.value.trim() || bedLabel(selectedBedId);
+    bedNames[selectedBedId] = newName;
+    renderBeds();
+    if(!requireFirebase()) return;
+    await FB.setDoc(FB.doc(bedsCol, selectedBedId), { name: newName });
+    showToast("Nome aiuola aggiornato");
+  });
+  el.querySelectorAll(".tab-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{ activeTab = btn.dataset.tab; renderPanel(); });
+  });
+  if(activeTab==="pianta") renderPiantaTab(); else renderStoricoTab();
+}
+
+function renderPiantaTab(){
+  const el = document.getElementById("tabContent");
+  const now = new Date();
+  const cropOptions = crops.map(c=>`<option value="${c.name}" data-family="${c.family}">${c.name}</option>`).join("");
+  el.innerHTML = `
+    <label class="field"><span>Coltura</span><select id="cropSelect">${cropOptions}</select></label>
+    <div class="row2">
+      <label class="field"><span>Mese</span><select id="monthSelect">${MONTHS.map((m,i)=>`<option value="${i+1}" ${i===now.getMonth()?"selected":""}>${m}</option>`).join("")}</select></label>
+      <label class="field"><span>Anno</span><input type="number" id="yearInput" value="${now.getFullYear()}" min="2000" max="2100"></label>
+    </div>
+    <label class="field"><span>Note (opzionale)</span><textarea id="notesInput" placeholder="Varietà, data di trapianto, esito..."></textarea></label>
+    <div id="warningZone"></div>
+    <button class="btn" id="saveBtn">Registra semina</button>
+  `;
+  function checkWarning(){
+    const family = document.getElementById("cropSelect").selectedOptions[0]?.dataset.family;
+    const year = parseInt(document.getElementById("yearInput").value, 10);
+    const month = parseInt(document.getElementById("monthSelect").value, 10);
+    const conflict = findFamilyConflict(selectedBedId, family, year, month);
+    const zone = document.getElementById("warningZone");
+    zone.innerHTML = conflict
+      ? `<div class="warning-banner">⚠️ <div>Questa aiuola ha ospitato <strong>${conflict.last.family}</strong> (${conflict.last.cropName}) circa ${conflict.diffYears.toFixed(1)} anni fa — sotto i ${ROTATION_YEARS} anni consigliati.</div></div>`
+      : "";
+  }
+  document.getElementById("cropSelect").addEventListener("change", checkWarning);
+  document.getElementById("yearInput").addEventListener("change", checkWarning);
+  document.getElementById("monthSelect").addEventListener("change", checkWarning);
+  checkWarning();
+  document.getElementById("saveBtn").addEventListener("click", async ()=>{
+    if(!requireFirebase()) return;
+    const cropSelect = document.getElementById("cropSelect");
+    const cropName = cropSelect.value;
+    const family = cropSelect.selectedOptions[0]?.dataset.family || "Altro";
+    const year = parseInt(document.getElementById("yearInput").value, 10);
+    const month = parseInt(document.getElementById("monthSelect").value, 10);
+    const notes = document.getElementById("notesInput").value.trim();
+    await FB.addDoc(plantingsCol, { bedId:selectedBedId, cropName, family, year, month, notes, createdAt:Date.now() });
+    showToast("Semina registrata");
+  });
+}
+
+function renderStoricoTab(){
+  const el = document.getElementById("tabContent");
+  const list = plantings.filter(p=>p.bedId===selectedBedId).sort((a,b)=>(b.year*12+b.month)-(a.year*12+a.month));
+  if(list.length===0){ el.innerHTML = `<div class="history-empty">Nessuna semina registrata ancora per questa aiuola.</div>`; return; }
+  el.innerHTML = list.map(p=>`
+    <div class="history-item">
+      <div class="when mono">${MONTHS[p.month-1]} ${p.year}</div>
+      <div class="what">${p.cropName} <span class="fam">· ${p.family}</span></div>
+      ${p.notes ? `<div class="note">${p.notes}</div>` : ""}
+    </div>`).join("");
+}
+
+function renderCropModal(){
+  const list = document.getElementById("cropList");
+  list.innerHTML = crops.map(c=>`
+    <div class="crop-row"><span>${c.name} <span class="fam-tag">${c.family}</span></span>
+    <button class="btn danger-outline small" data-crop-id="${c.id}">Rimuovi</button></div>`).join("");
+  list.querySelectorAll("button[data-crop-id]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      if(!requireFirebase()) return;
+      await FB.deleteDoc(FB.doc(cropsCol, btn.dataset.cropId));
+      showToast("Coltura rimossa");
+    });
+  });
+  const famSelect = document.getElementById("newCropFamily");
+  famSelect.innerHTML = Object.keys(FAMILY_COLORS).map(f=>`<option value="${f}">${f}</option>`).join("");
+}
+document.getElementById("openCropsBtn").addEventListener("click", ()=>{
+  document.getElementById("cropModalBackdrop").classList.add("open");
+  renderCropModal();
+});
+document.getElementById("closeCropModal").addEventListener("click", ()=>{
+  document.getElementById("cropModalBackdrop").classList.remove("open");
+});
+document.getElementById("addCropBtn").addEventListener("click", async ()=>{
+  if(!requireFirebase()) return;
+  const name = document.getElementById("newCropName").value.trim();
+  const family = document.getElementById("newCropFamily").value;
+  if(!name){ showToast("Inserisci un nome coltura"); return; }
+  await FB.addDoc(cropsCol, { name, family });
+  document.getElementById("newCropName").value = "";
+  showToast("Coltura aggiunta");
+});
+
+async function seedCropsIfEmpty(){
+  if(!firebaseReady) return;
+  const snap = await FB.getDocs(cropsCol);
+  if(snap.empty){
+    const batch = FB.writeBatch(db);
+    DEFAULT_CROPS.forEach(c=>{ const ref = FB.doc(cropsCol); batch.set(ref, c); });
+    await batch.commit();
+  }
+}
+function listenBeds(){
+  if(!firebaseReady) return;
+  FB.onSnapshot(bedsCol, (snap)=>{
+    bedNames = {};
+    snap.forEach(d=> bedNames[d.id] = d.data().name);
+    renderBeds();
+    if(selectedBedId) renderPanel();
+  });
+}
+function listenPlantings(){
+  if(!firebaseReady) return;
+  FB.onSnapshot(FB.query(plantingsCol, FB.orderBy("createdAt","desc")), (snap)=>{
+    plantings = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+    renderBeds();
+    if(selectedBedId && activeTab==="storico") renderStoricoTab();
+  });
+}
+function listenCrops(){
+  if(!firebaseReady) return;
+  FB.onSnapshot(cropsCol, (snap)=>{
+    crops = snap.docs.map(d=>({ id:d.id, ...d.data() })).sort((a,b)=>a.name.localeCompare(b.name));
+    if(document.getElementById("cropModalBackdrop").classList.contains("open")) renderCropModal();
+    if(selectedBedId && activeTab==="pianta") renderPiantaTab();
+  });
+}
+
+async function init(){
+  renderPaths();
+  renderBeds();
+  renderPanel();
+  await setupFirebase();
+  if(firebaseReady){
+    await seedCropsIfEmpty();
+    listenBeds(); listenPlantings(); listenCrops();
+  } else {
+    showToast("Mappa pronta — configura Firebase per salvare i dati");
+  }
+}
+init();
+</script>
+</body>
+</html>
