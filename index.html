@@ -3,79 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orto Piccolo · Rotazione Colture</title>
+<title>Orto Pratieghi · Rotazione Colture</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Libre+Franklin:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#2c2a1f;
-    --paper:#efe3c8;
-    --paper-deep:#e4d5ae;
-    --soil:#5b3a29;
-    --soil-light:#7a5138;
-    --leaf:#4b6b43;
-    --mustard:#c99a2e;
-    --mustard-light:#e8c96a;
-    --slate:#4c6b8a;
-    --danger:#a8432f;
-    --path:#c9beA4;
-    --white:#fffaf0;
-    --radius-sm:6px;
-    --radius-md:12px;
-    --radius-lg:20px;
+    --ink:#2c2a1f; --paper:#efe3c8; --paper-deep:#e4d5ae;
+    --soil:#5b3a29; --soil-light:#7a5138; --leaf:#4b6b43;
+    --mustard:#c99a2e; --mustard-light:#e8c96a; --slate:#4c6b8a;
+    --danger:#a8432f; --path:#c9beA4; --white:#fffaf0;
+    --radius-sm:6px; --radius-md:12px; --radius-lg:20px;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
     background:var(--paper);
     background-image:radial-gradient(circle at 1px 1px, rgba(91,58,41,0.06) 1px, transparent 0);
-    background-size:22px 22px;
-    color:var(--ink);
-    font-family:'Libre Franklin', sans-serif;
-    -webkit-font-smoothing:antialiased;
-    min-height:100vh;
+    background-size:22px 22px; color:var(--ink); font-family:'Libre Franklin', sans-serif;
+    -webkit-font-smoothing:antialiased; min-height:100vh;
   }
   .mono{font-family:'IBM Plex Mono', monospace;}
   h1,h2,h3{font-family:'Fraunces', serif; margin:0; color:var(--soil);}
 
   header.top{
-    padding:28px 20px 18px;
-    border-bottom:2px solid var(--soil);
+    padding:20px 20px 16px; border-bottom:2px solid var(--soil);
+    display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;
   }
-  header.top h1{font-size:clamp(1.5rem, 4vw, 2.1rem); font-weight:600;}
-  header.top .sub{font-size:0.92rem; color:var(--soil-light); font-style:italic; margin-top:4px;}
+  header.top h1{font-size:clamp(1.4rem, 4vw, 2rem); font-weight:600;}
+  header.top .sub{font-size:0.9rem; color:var(--soil-light); font-style:italic; margin-top:4px;}
+
+  .auth-box{display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono', monospace; font-size:0.78rem;}
+  .auth-badge{
+    display:flex; align-items:center; gap:6px; background:var(--paper); border:1px solid var(--paper-deep);
+    border-radius:20px; padding:5px 12px; color:var(--soil);
+  }
+  .auth-badge.admin{background:var(--leaf); color:var(--white); border-color:var(--leaf);}
 
   main{
     max-width:1180px; margin:0 auto; padding:24px 20px 60px;
-    display:grid; grid-template-columns:1.4fr 1fr; gap:24px; align-items:start;
+    display:grid; grid-template-columns:1.5fr 1fr; gap:24px; align-items:start;
   }
-  @media (max-width:880px){ main{grid-template-columns:1fr;} }
+  @media (max-width:940px){ main{grid-template-columns:1fr;} }
 
   .card{
     background:var(--white); border:1px solid var(--paper-deep);
     border-radius:var(--radius-lg); box-shadow:0 2px 0 rgba(91,58,41,0.08); padding:18px;
   }
   .map-card{position:sticky; top:16px;}
-  @media (max-width:880px){.map-card{position:static;}}
+  @media (max-width:940px){.map-card{position:static;}}
 
   .map-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; flex-wrap:wrap; gap:8px;}
   .map-head h2{font-size:1.15rem;}
   .measure-tag{
-    font-family:'IBM Plex Mono', monospace; font-size:0.76rem; color:var(--soil);
+    font-family:'IBM Plex Mono', monospace; font-size:0.74rem; color:var(--soil);
     background:var(--paper); border:1px dashed var(--soil-light); border-radius:20px; padding:3px 10px;
   }
-
   svg#plotSvg{width:100%; height:auto; display:block;}
-  .bed{ stroke:var(--soil); stroke-width:1.3; cursor:pointer; transition:filter 0.15s ease, stroke-width 0.15s ease; }
-  .bed:hover{filter:brightness(1.08); stroke-width:2.2;}
-  .bed.selected{stroke:var(--danger); stroke-width:2.8;}
-  .bed-label{ font-family:'IBM Plex Mono', monospace; font-size:12px; fill:var(--ink); pointer-events:none; text-anchor:middle; }
-  .path-rect{ fill:var(--path); stroke:var(--soil-light); stroke-width:0.6; stroke-dasharray:2,2; }
-  .path-label{ font-family:'IBM Plex Mono', monospace; font-size:9px; fill:var(--soil-light); text-anchor:middle; }
-  .section-title{ font-family:'Fraunces', serif; font-weight:600; font-size:17px; fill:var(--soil); }
+  .plot-bg{fill:var(--path);}
+  .plot-title{font-family:'Fraunces', serif; font-weight:600; font-size:19px; fill:var(--soil);}
+  .plot-scale{font-family:'IBM Plex Mono', monospace; font-size:11px; fill:var(--soil-light);}
 
-  .legend{display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:14px; font-size:0.78rem;}
+  .bed{ stroke:var(--soil); stroke-width:1.2; cursor:pointer; transition:filter 0.15s ease, stroke-width 0.15s ease; }
+  .bed:hover{filter:brightness(1.08); stroke-width:2.2;}
+  .bed.selected{stroke:var(--danger); stroke-width:2.6;}
+  .bed.shrub, .bed.tree{ cursor:default; }
+  .bed-label{ font-family:'IBM Plex Mono', monospace; font-size:11px; fill:var(--ink); pointer-events:none; text-anchor:middle; }
+  .fixed-label{ font-family:'IBM Plex Mono', monospace; font-size:9px; fill:var(--soil); pointer-events:none; text-anchor:middle; }
+
+  .legend{display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:14px; font-size:0.76rem;}
   .legend-item{display:flex; align-items:center; gap:6px;}
   .legend-swatch{width:11px; height:11px; border-radius:3px; display:inline-block; border:1px solid rgba(0,0,0,0.15);}
 
@@ -92,15 +88,17 @@
     border:none; border-bottom:1.5px dashed var(--paper-deep); background:transparent; padding:2px 0; max-width:220px;
   }
   .bed-title input:focus{outline:none; border-color:var(--mustard);}
+  .bed-title input:disabled{color:var(--soil-light); border-bottom-style:solid;}
   .rename-hint{font-size:0.68rem; color:var(--soil-light);}
 
   label.field{display:block; margin-bottom:12px; font-size:0.85rem; color:var(--soil);}
   label.field span{display:block; margin-bottom:4px; font-weight:600;}
-  select, input[type=text], input[type=number], textarea{
+  select, input[type=text], input[type=number], input[type=email], input[type=password], textarea{
     width:100%; font-family:'Libre Franklin', sans-serif; font-size:0.9rem; padding:8px 10px;
     border:1.5px solid var(--paper-deep); border-radius:var(--radius-sm); background:var(--white); color:var(--ink);
   }
   select:focus, input:focus, textarea:focus{outline:none; border-color:var(--mustard);}
+  select:disabled, input:disabled, textarea:disabled{background:var(--paper); color:var(--soil-light);}
   textarea{resize:vertical; min-height:56px;}
   .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
 
@@ -109,6 +107,7 @@
     padding:9px 18px; cursor:pointer; background:var(--mustard); color:var(--soil); font-weight:500;
   }
   .btn:hover{background:var(--mustard-light);}
+  .btn:disabled{background:var(--paper-deep); color:var(--soil-light); cursor:not-allowed;}
   .btn.secondary{background:transparent; border:1.5px solid var(--soil); color:var(--soil);}
   .btn.small{padding:5px 12px; font-size:0.72rem;}
   .btn.danger-outline{background:transparent; border:1.5px solid var(--danger); color:var(--danger);}
@@ -116,6 +115,10 @@
   .warning-banner{
     background:#f6e2d9; border:1.5px solid var(--danger); color:#7a2f1c; border-radius:var(--radius-sm);
     padding:10px 12px; font-size:0.82rem; margin-bottom:12px; display:flex; gap:8px; align-items:flex-start;
+  }
+  .info-banner{
+    background:var(--paper); border:1.5px solid var(--paper-deep); color:var(--soil); border-radius:var(--radius-sm);
+    padding:10px 12px; font-size:0.82rem; margin-bottom:12px;
   }
   .history-item{border-left:3px solid var(--mustard); padding:6px 0 6px 12px; margin-bottom:10px; font-size:0.88rem;}
   .history-item .when{font-family:'IBM Plex Mono', monospace; font-size:0.75rem; color:var(--soil-light);}
@@ -126,15 +129,17 @@
 
   .modal-backdrop{position:fixed; inset:0; background:rgba(44,42,31,0.45); display:none; align-items:center; justify-content:center; z-index:50; padding:20px;}
   .modal-backdrop.open{display:flex;}
-  .modal{background:var(--white); border-radius:var(--radius-lg); padding:22px; max-width:480px; width:100%; max-height:85vh; overflow-y:auto; border:1px solid var(--paper-deep);}
+  .modal{background:var(--white); border-radius:var(--radius-lg); padding:22px; max-width:420px; width:100%; max-height:85vh; overflow-y:auto; border:1px solid var(--paper-deep);}
   .modal h2{margin-bottom:14px; font-size:1.2rem;}
   .crop-row{display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--paper); font-size:0.85rem;}
   .crop-row .fam-tag{font-family:'IBM Plex Mono', monospace; font-size:0.68rem; background:var(--paper); border-radius:10px; padding:2px 8px; margin-left:8px; color:var(--soil);}
   .add-crop-form{display:flex; gap:6px; margin-top:14px; flex-wrap:wrap;}
   .add-crop-form input{flex:1; min-width:120px;}
   .add-crop-form select{flex:1; min-width:120px;}
-  .top-actions{display:flex; justify-content:flex-end; margin-bottom:10px; gap:8px;}
+  .top-actions{display:flex; justify-content:flex-end; margin-bottom:10px; gap:8px; flex-wrap:wrap;}
   .close-x{cursor:pointer; float:right; font-family:'IBM Plex Mono',monospace; color:var(--soil-light); font-size:0.9rem;}
+  .modal .field-gap{margin-bottom:12px;}
+  .auth-error{color:var(--danger); font-size:0.8rem; margin-top:6px;}
 
   .toast{
     position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--soil); color:var(--white);
@@ -147,29 +152,29 @@
 <body>
 
 <header class="top">
-  <h1>🌱 Orto Piccolo — Rotazione Colture</h1>
-  <div class="sub">Mappa a misura reale · 16 aiuole + vialetti</div>
+  <div>
+    <h1>🌱 Orto Pratieghi — Rotazione Colture</h1>
+    <div class="sub">Orto Grande (6,5×6 m) + Orto Piccolo (8×2 m) · scala reale</div>
+  </div>
+  <div class="auth-box" id="authBox"></div>
 </header>
 
 <main>
   <section class="card map-card">
     <div class="map-head">
-      <h2>Mappa dell'Orto Piccolo</h2>
-      <span class="measure-tag mono">16 aiuole · proporzioni reali da Excel</span>
+      <h2>Mappa dell'orto</h2>
+      <span class="measure-tag mono">16 + 9 aiuole · 2 alberi · 7 arbusti</span>
     </div>
 
-    <svg id="plotSvg" viewBox="0 0 940 260" xmlns="http://www.w3.org/2000/svg">
-      <text x="60" y="52" class="section-title">Orto Piccolo</text>
-
-      <!-- vialetti (percorsi) -->
-      <g id="pathsGroup"></g>
-      <!-- aiuole -->
+    <svg id="plotSvg" viewBox="0 0 792 902" xmlns="http://www.w3.org/2000/svg">
+      <rect class="plot-bg" x="60" y="90" width="546" height="504" rx="4"></rect>
+      <rect class="plot-bg" x="60" y="684" width="672" height="168" rx="4"></rect>
+      <text x="60" y="72" class="plot-title">Orto Grande</text>
+      <text x="60" y="676" class="plot-title">Orto Piccolo</text>
       <g id="bedsGroup"></g>
     </svg>
 
-    <div class="legend" id="legend">
-      <div class="legend-item"><span class="legend-swatch" style="background:var(--path)"></span>Vialetto</div>
-    </div>
+    <div class="legend" id="legend"></div>
   </section>
 
   <section class="card" id="sidePanel">
@@ -182,12 +187,26 @@
   </section>
 </main>
 
+<div class="modal-backdrop" id="loginModalBackdrop">
+  <div class="modal">
+    <span class="close-x" id="closeLoginModal">✕ chiudi</span>
+    <h2>Accesso amministratore</h2>
+    <div class="info-banner">Chiunque può consultare la mappa e lo storico. Solo l'amministratore può registrare semine, rinominare aiuole o gestire le colture.</div>
+    <div class="field-gap">
+      <label class="field"><span>Email</span><input type="email" id="loginEmail"></label>
+      <label class="field"><span>Password</span><input type="password" id="loginPassword"></label>
+    </div>
+    <div id="loginError" class="auth-error"></div>
+    <button class="btn" id="loginBtn">Accedi</button>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="cropModalBackdrop">
   <div class="modal">
     <span class="close-x" id="closeCropModal">✕ chiudi</span>
     <h2>Colture disponibili</h2>
     <div id="cropList"></div>
-    <div class="add-crop-form">
+    <div class="add-crop-form" id="addCropForm">
       <input type="text" id="newCropName" placeholder="Nome coltura">
       <select id="newCropFamily"></select>
       <button class="btn small" id="addCropBtn">Aggiungi</button>
@@ -198,14 +217,6 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-/* ==========================================================
-   CONFIGURAZIONE FIREBASE
-   Sostituisci con la configurazione del tuo progetto.
-   Le collezioni usano lo stesso prefisso "orto_" del file
-   principale, così in futuro i dati potranno convivere.
-   Import dinamico e protetto: la mappa si disegna comunque
-   anche se Firebase non è (ancora) configurato.
-   ========================================================== */
 const firebaseConfig = {
   apiKey: "AIzaSyDeQQGPDAPHgS5o4nrXJJpo5E06wVPlCH8",
   authDomain: "orto-pratieghi.firebaseapp.com",
@@ -216,84 +227,103 @@ const firebaseConfig = {
 };
 
 let firebaseReady = false;
-let db = null;
-let FB = null;
+let db = null, auth = null, FB = null, FBA = null;
 let bedsCol = null, plantingsCol = null, cropsCol = null;
+let currentUser = null;
 
 async function setupFirebase(){
   try {
     const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
     const fsMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    const authMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
     const app = initializeApp(firebaseConfig);
     db = fsMod.getFirestore(app);
-    FB = fsMod;
+    auth = authMod.getAuth(app);
+    FB = fsMod; FBA = authMod;
     bedsCol = FB.collection(db, "orto_beds");
     plantingsCol = FB.collection(db, "orto_plantings");
     cropsCol = FB.collection(db, "orto_crops");
     firebaseReady = true;
+    FBA.onAuthStateChanged(auth, (user)=>{
+      currentUser = user;
+      renderAuthBox();
+      renderBeds();
+      renderPanel();
+    });
   } catch(err){
     console.error("Firebase non disponibile:", err);
     firebaseReady = false;
+    renderAuthBox();
   }
 }
-function requireFirebase(){
-  if(!firebaseReady){ showToast("Firebase non collegato — vedi le istruzioni nel file"); return false; }
+function isAdmin(){ return !!currentUser; }
+function requireAdmin(){
+  if(!isAdmin()){ showToast("Devi accedere come amministratore per modificare"); return false; }
   return true;
 }
 
-/* ==========================================================
-   AIUOLE E VIALETTI — misure esatte ricavate dal foglio Excel
-   (larghezza colonne / altezza righe reali, scala 1.2, margine 60/70)
-   ========================================================== */
-const BED_DEFS = [
-  { id:"piccolo-20", defaultName:"Aiuola 20", x:60.0,  y:70.0,  w:70.8, h:46.4 },
-  { id:"piccolo-1",  defaultName:"Aiuola 1",  x:177.6, y:70.0,  w:88.8, h:46.4 },
-  { id:"piccolo-2",  defaultName:"Aiuola 2",  x:266.4, y:70.0,  w:70.8, h:46.4 },
-  { id:"piccolo-3",  defaultName:"Aiuola 3",  x:384.0, y:70.0,  w:88.8, h:46.4 },
-  { id:"piccolo-4",  defaultName:"Aiuola 4",  x:472.8, y:70.0,  w:70.8, h:46.4 },
-  { id:"piccolo-5",  defaultName:"Aiuola 5",  x:590.4, y:70.0,  w:88.8, h:46.4 },
-  { id:"piccolo-6",  defaultName:"Aiuola 6",  x:679.2, y:70.0,  w:70.8, h:46.4 },
-  { id:"piccolo-22", defaultName:"Aiuola 22", x:796.8, y:70.0,  w:70.8, h:46.4 },
-  { id:"piccolo-21", defaultName:"Aiuola 21", x:60.0,  y:139.6, w:70.8, h:70.4 },
-  { id:"piccolo-7",  defaultName:"Aiuola 7",  x:177.6, y:139.6, w:88.8, h:70.4 },
-  { id:"piccolo-8",  defaultName:"Aiuola 8",  x:266.4, y:139.6, w:70.8, h:70.4 },
-  { id:"piccolo-9",  defaultName:"Aiuola 9",  x:384.0, y:139.6, w:88.8, h:70.4 },
-  { id:"piccolo-10", defaultName:"Aiuola 10", x:472.8, y:139.6, w:70.8, h:70.4 },
-  { id:"piccolo-11", defaultName:"Aiuola 11", x:590.4, y:139.6, w:88.8, h:70.4 },
-  { id:"piccolo-12", defaultName:"Aiuola 12", x:679.2, y:139.6, w:70.8, h:70.4 },
-  { id:"piccolo-23", defaultName:"Aiuola 23", x:796.8, y:139.6, w:70.8, h:70.4 }
+const GRANDE_BEDS = [
+  { id:'F1', num:'F1', type:'tree', x:60.0, y:132.0, w:84.0, h:84.0 },
+  { id:'F2', num:'F2', type:'tree', x:312.0, y:132.0, w:84.0, h:84.0 },
+  { id:'G1', num:'G1', type:'bed', x:144.0, y:132.0, w:84.0, h:84.0 },
+  { id:'G2', num:'G2', type:'bed', x:228.0, y:132.0, w:84.0, h:84.0 },
+  { id:'G3', num:'G3', type:'bed', x:396.0, y:132.0, w:84.0, h:84.0 },
+  { id:'G4', num:'G4', type:'bed', x:480.0, y:132.0, w:84.0, h:84.0 },
+  { id:'G5', num:'G5', type:'bed', x:144.0, y:258.0, w:84.0, h:84.0 },
+  { id:'G6', num:'G6', type:'bed', x:228.0, y:258.0, w:84.0, h:84.0 },
+  { id:'G7', num:'G7', type:'bed', x:354.0, y:258.0, w:126.0, h:84.0 },
+  { id:'G8', num:'G8', type:'bed', x:480.0, y:258.0, w:84.0, h:84.0 },
+  { id:'G9', num:'G9', type:'bed', x:144.0, y:342.0, w:84.0, h:84.0 },
+  { id:'G10', num:'G10', type:'bed', x:228.0, y:342.0, w:84.0, h:84.0 },
+  { id:'G11', num:'G11', type:'bed', x:354.0, y:342.0, w:126.0, h:84.0 },
+  { id:'G12', num:'G12', type:'bed', x:480.0, y:342.0, w:84.0, h:84.0 },
+  { id:'G13', num:'G13', type:'bed', x:144.0, y:468.0, w:84.0, h:84.0 },
+  { id:'G14', num:'G14', type:'bed', x:228.0, y:468.0, w:84.0, h:84.0 },
+  { id:'G15', num:'G15', type:'bed', x:354.0, y:468.0, w:126.0, h:84.0 },
+  { id:'G16', num:'G16', type:'bed', x:480.0, y:468.0, w:84.0, h:84.0 }
 ];
+const PICCOLO_BEDS = [
+  { id:'A1', num:'A1', type:'shrub', x:60.0, y:684.0, w:56.0, h:84.0 },
+  { id:'A2', num:'A2', type:'shrub', x:676.0, y:684.0, w:56.0, h:84.0 },
+  { id:'A3', num:'A3', type:'shrub', x:60.0, y:768.0, w:56.0, h:84.0 },
+  { id:'A4', num:'A4', type:'shrub', x:676.0, y:768.0, w:56.0, h:84.0 },
+  { id:'A5', num:'A5', type:'shrub', x:172.0, y:768.0, w:56.0, h:84.0 },
+  { id:'A6', num:'A6', type:'shrub', x:508.0, y:684.0, w:56.0, h:56.0 },
+  { id:'A7', num:'A7', type:'shrub', x:564.0, y:684.0, w:56.0, h:56.0 },
+  { id:'P1', num:'P1', type:'bed', x:228.0, y:768.0, w:56.0, h:84.0 },
+  { id:'P2', num:'P2', type:'bed', x:340.0, y:768.0, w:56.0, h:84.0 },
+  { id:'P3', num:'P3', type:'bed', x:396.0, y:768.0, w:56.0, h:84.0 },
+  { id:'P4', num:'P4', type:'bed', x:508.0, y:768.0, w:56.0, h:84.0 },
+  { id:'P5', num:'P5', type:'bed', x:564.0, y:768.0, w:56.0, h:84.0 },
+  { id:'P6', num:'P6', type:'bed', x:172.0, y:684.0, w:56.0, h:56.0 },
+  { id:'P7', num:'P7', type:'bed', x:228.0, y:684.0, w:56.0, h:56.0 },
+  { id:'P8', num:'P8', type:'bed', x:340.0, y:684.0, w:56.0, h:56.0 },
+  { id:'P9', num:'P9', type:'bed', x:396.0, y:684.0, w:56.0, h:56.0 }
+];
+const BED_DEFS = [...GRANDE_BEDS, ...PICCOLO_BEDS];
 
-// vialetti: 4 verticali (tra le coppie di aiuole) + 1 orizzontale (tra le due file)
-const PATH_DEFS = [
-  { x:130.8, y:70.0,  w:46.8, h:140.0 },
-  { x:337.2, y:70.0,  w:46.8, h:140.0 },
-  { x:543.6, y:70.0,  w:46.8, h:140.0 },
-  { x:750.0, y:70.0,  w:46.8, h:140.0 },
-  { x:60.0,  y:116.4, w:807.6, h:23.2 }
-];
+const FIXED_NAMES = {
+  F1:"Cachi Mercatelli", F2:"Komet",
+  A1:"Alloro", A2:"Ribes Rosso", A3:"Rosmarino", A4:"Mirtillo",
+  A5:"Melissa", A6:"Lampone Ambra", A7:"Ribes Bianco"
+};
 
 const FAMILY_COLORS = {
-  "Solanacee": "#a8432f", "Cucurbitacee": "#c99a2e", "Leguminose": "#4b6b43",
-  "Brassicacee": "#7d8c5c", "Asteracee": "#8a5a44", "Liliacee": "#9b6bb3",
-  "Ombrellifere": "#4c8a7a", "Chenopodiacee": "#b3894a", "Labiate": "#6f9b6b", "Altro": "#b8ad8f"
+  "Solanacee":"#a8432f","Cucurbitacee":"#c99a2e","Leguminose":"#4b6b43","Brassicacee":"#7d8c5c",
+  "Asteracee":"#8a5a44","Liliacee":"#9b6bb3","Ombrellifere":"#4c8a7a","Chenopodiacee":"#b3894a",
+  "Labiate":"#6f9b6b","Altro":"#b8ad8f"
 };
 const DEFAULT_CROPS = [
-  { name: "Pomodoro", family: "Solanacee" }, { name: "Melanzana", family: "Solanacee" },
-  { name: "Peperone", family: "Solanacee" }, { name: "Patata", family: "Solanacee" },
-  { name: "Zucchina", family: "Cucurbitacee" }, { name: "Cetriolo", family: "Cucurbitacee" },
-  { name: "Zucca", family: "Cucurbitacee" }, { name: "Melone", family: "Cucurbitacee" },
-  { name: "Fagiolo", family: "Leguminose" }, { name: "Fagiolino", family: "Leguminose" },
-  { name: "Pisello", family: "Leguminose" }, { name: "Fava", family: "Leguminose" },
-  { name: "Cavolo cappuccio", family: "Brassicacee" }, { name: "Cavolfiore", family: "Brassicacee" },
-  { name: "Broccolo", family: "Brassicacee" }, { name: "Rucola", family: "Brassicacee" },
-  { name: "Ravanello", family: "Brassicacee" }, { name: "Insalata/Lattuga", family: "Asteracee" },
-  { name: "Radicchio", family: "Asteracee" }, { name: "Carciofo", family: "Asteracee" },
-  { name: "Cipolla", family: "Liliacee" }, { name: "Aglio", family: "Liliacee" },
-  { name: "Porro", family: "Liliacee" }, { name: "Carota", family: "Ombrellifere" },
-  { name: "Sedano", family: "Ombrellifere" }, { name: "Prezzemolo", family: "Ombrellifere" },
-  { name: "Finocchio", family: "Ombrellifere" }, { name: "Bietola", family: "Chenopodiacee" },
-  { name: "Spinacio", family: "Chenopodiacee" }, { name: "Basilico", family: "Labiate" }
+  {name:"Pomodoro",family:"Solanacee"},{name:"Melanzana",family:"Solanacee"},{name:"Peperone",family:"Solanacee"},
+  {name:"Patata",family:"Solanacee"},{name:"Zucchina",family:"Cucurbitacee"},{name:"Cetriolo",family:"Cucurbitacee"},
+  {name:"Zucca",family:"Cucurbitacee"},{name:"Melone",family:"Cucurbitacee"},{name:"Fagiolo",family:"Leguminose"},
+  {name:"Fagiolino",family:"Leguminose"},{name:"Pisello",family:"Leguminose"},{name:"Fava",family:"Leguminose"},
+  {name:"Cavolo cappuccio",family:"Brassicacee"},{name:"Cavolfiore",family:"Brassicacee"},{name:"Broccolo",family:"Brassicacee"},
+  {name:"Rucola",family:"Brassicacee"},{name:"Ravanello",family:"Brassicacee"},{name:"Insalata/Lattuga",family:"Asteracee"},
+  {name:"Radicchio",family:"Asteracee"},{name:"Carciofo",family:"Asteracee"},{name:"Cipolla",family:"Liliacee"},
+  {name:"Aglio",family:"Liliacee"},{name:"Porro",family:"Liliacee"},{name:"Carota",family:"Ombrellifere"},
+  {name:"Sedano",family:"Ombrellifere"},{name:"Prezzemolo",family:"Ombrellifere"},{name:"Finocchio",family:"Ombrellifere"},
+  {name:"Bietola",family:"Chenopodiacee"},{name:"Spinacio",family:"Chenopodiacee"},{name:"Basilico",family:"Labiate"}
 ];
 const MONTHS = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
 const ROTATION_YEARS = 3;
@@ -309,38 +339,25 @@ function showToast(msg){
   t.textContent = msg; t.classList.add("show");
   setTimeout(()=>t.classList.remove("show"), 2200);
 }
+function bedDef(id){ return BED_DEFS.find(b=>b.id===id); }
 function bedLabel(id){
-  return bedNames[id] || BED_DEFS.find(b=>b.id===id)?.defaultName || id;
+  const def = bedDef(id);
+  if(def && FIXED_NAMES[id]) return bedNames[id] || FIXED_NAMES[id];
+  return bedNames[id] || (def ? def.num : id);
 }
 function latestPlantingForBed(bedId){
   const list = plantings.filter(p=>p.bedId===bedId);
   if(list.length===0) return null;
-  return list.slice().sort((a,b)=> (b.year*12+b.month) - (a.year*12+a.month))[0];
+  return list.slice().sort((a,b)=>(b.year*12+b.month)-(a.year*12+a.month))[0];
 }
 function findFamilyConflict(bedId, family, year, month){
   const periodIdx = year*12+month;
-  const sameFamily = plantings
-    .filter(p => p.bedId===bedId && p.family===family)
-    .map(p => ({ ...p, idx: p.year*12+p.month }))
-    .filter(p => p.idx < periodIdx)
-    .sort((a,b)=> b.idx - a.idx);
+  const sameFamily = plantings.filter(p=>p.bedId===bedId && p.family===family)
+    .map(p=>({...p, idx:p.year*12+p.month})).filter(p=>p.idx<periodIdx).sort((a,b)=>b.idx-a.idx);
   if(sameFamily.length===0) return null;
   const last = sameFamily[0];
-  const diffYears = (periodIdx - last.idx) / 12;
-  if(diffYears < ROTATION_YEARS) return { last, diffYears };
-  return null;
-}
-
-function renderPaths(){
-  const g = document.getElementById("pathsGroup");
-  g.innerHTML = "";
-  PATH_DEFS.forEach(p=>{
-    const r = document.createElementNS("http://www.w3.org/2000/svg","rect");
-    r.setAttribute("x",p.x); r.setAttribute("y",p.y);
-    r.setAttribute("width",p.w); r.setAttribute("height",p.h);
-    r.setAttribute("class","path-rect");
-    g.appendChild(r);
-  });
+  const diffYears = (periodIdx-last.idx)/12;
+  return diffYears < ROTATION_YEARS ? {last, diffYears} : null;
 }
 
 function renderBeds(){
@@ -350,21 +367,46 @@ function renderBeds(){
     const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
     rect.setAttribute("x", bed.x); rect.setAttribute("y", bed.y);
     rect.setAttribute("width", bed.w); rect.setAttribute("height", bed.h);
-    rect.setAttribute("rx", 4);
-    rect.setAttribute("class","bed"+(bed.id===selectedBedId ? " selected":""));
-    const latest = latestPlantingForBed(bed.id);
-    const color = latest ? (FAMILY_COLORS[latest.family]||FAMILY_COLORS["Altro"]) : "#f2e2ac";
+    rect.setAttribute("rx", bed.type==="bed" ? 5 : 8);
+    rect.setAttribute("class", "bed "+bed.type+(bed.id===selectedBedId?" selected":""));
+
+    let color;
+    if(bed.type==="tree"){ color = "#7d99b0"; }
+    else if(bed.type==="shrub"){ color = "#93a878"; }
+    else {
+      const latest = latestPlantingForBed(bed.id);
+      color = latest ? (FAMILY_COLORS[latest.family]||FAMILY_COLORS["Altro"]) : "#f2e2ac";
+    }
     rect.setAttribute("fill", color);
     rect.addEventListener("click", ()=> selectBed(bed.id));
     g.appendChild(rect);
 
     const label = document.createElementNS("http://www.w3.org/2000/svg","text");
-    label.setAttribute("x", bed.x+bed.w/2); label.setAttribute("y", bed.y+bed.h/2+4);
-    label.setAttribute("class","bed-label");
+    label.setAttribute("x", bed.x+bed.w/2); label.setAttribute("y", bed.y+bed.h/2-2);
+    label.setAttribute("class", bed.type==="bed" ? "bed-label" : "fixed-label");
     label.setAttribute("pointer-events","none");
-    label.textContent = bedLabel(bed.id).replace("Aiuola ","");
+    label.textContent = bed.num;
     g.appendChild(label);
+
+    if(bed.type!=="bed"){
+      const sub = document.createElementNS("http://www.w3.org/2000/svg","text");
+      sub.setAttribute("x", bed.x+bed.w/2); sub.setAttribute("y", bed.y+bed.h/2+11);
+      sub.setAttribute("class","fixed-label");
+      sub.setAttribute("pointer-events","none");
+      sub.textContent = (FIXED_NAMES[bed.id]||"").length>12 ? FIXED_NAMES[bed.id].slice(0,11)+"…" : FIXED_NAMES[bed.id];
+      g.appendChild(sub);
+    }
   });
+}
+
+function renderLegend(){
+  const el = document.getElementById("legend");
+  el.innerHTML = `
+    <div class="legend-item"><span class="legend-swatch" style="background:#f2e2ac"></span>Aiuola libera</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:#7d99b0"></span>Albero da frutto</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:#93a878"></span>Arbusto</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:var(--path)"></span>Vialetto</div>
+  `;
 }
 
 function selectBed(bedId){
@@ -378,42 +420,50 @@ function renderPanel(){
     el.innerHTML = `<div class="panel-empty">Tocca un'aiuola sulla mappa per registrare o consultare le semine.</div>`;
     return;
   }
+  const def = bedDef(selectedBedId);
+  const admin = isAdmin();
   el.innerHTML = `
-    <div class="bed-title"><input type="text" id="bedNameInput" value="${bedLabel(selectedBedId)}"></div>
-    <div class="rename-hint">Tocca il nome per rinominare l'aiuola</div>
+    <div class="bed-title"><input type="text" id="bedNameInput" value="${bedLabel(selectedBedId)}" ${admin?"":"disabled"}></div>
+    <div class="rename-hint">${admin ? "Tocca il nome per rinominare" : "Accedi come amministratore per rinominare"}</div>
+    ${def.type!=="bed" ? `<div class="info-banner">Pianta perenne (non fa parte della rotazione annuale).</div>` : `
     <div class="tabs">
       <button class="tab-btn ${activeTab==='pianta'?'active':''}" data-tab="pianta">🌱 Pianta qui</button>
       <button class="tab-btn ${activeTab==='storico'?'active':''}" data-tab="storico">📜 Storico</button>
     </div>
-    <div id="tabContent"></div>
+    <div id="tabContent"></div>`}
   `;
   document.getElementById("bedNameInput").addEventListener("change", async (e)=>{
+    if(!requireAdmin()) return;
     const newName = e.target.value.trim() || bedLabel(selectedBedId);
     bedNames[selectedBedId] = newName;
     renderBeds();
-    if(!requireFirebase()) return;
+    if(!firebaseReady) return;
     await FB.setDoc(FB.doc(bedsCol, selectedBedId), { name: newName });
-    showToast("Nome aiuola aggiornato");
+    showToast("Nome aggiornato");
   });
-  el.querySelectorAll(".tab-btn").forEach(btn=>{
-    btn.addEventListener("click", ()=>{ activeTab = btn.dataset.tab; renderPanel(); });
-  });
-  if(activeTab==="pianta") renderPiantaTab(); else renderStoricoTab();
+  if(def.type==="bed"){
+    el.querySelectorAll(".tab-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{ activeTab = btn.dataset.tab; renderPanel(); });
+    });
+    if(activeTab==="pianta") renderPiantaTab(); else renderStoricoTab();
+  }
 }
 
 function renderPiantaTab(){
   const el = document.getElementById("tabContent");
+  const admin = isAdmin();
   const now = new Date();
   const cropOptions = crops.map(c=>`<option value="${c.name}" data-family="${c.family}">${c.name}</option>`).join("");
   el.innerHTML = `
-    <label class="field"><span>Coltura</span><select id="cropSelect">${cropOptions}</select></label>
+    ${admin ? "" : `<div class="info-banner">Sei in sola consultazione. Accedi come amministratore per registrare una semina.</div>`}
+    <label class="field"><span>Coltura</span><select id="cropSelect" ${admin?"":"disabled"}>${cropOptions}</select></label>
     <div class="row2">
-      <label class="field"><span>Mese</span><select id="monthSelect">${MONTHS.map((m,i)=>`<option value="${i+1}" ${i===now.getMonth()?"selected":""}>${m}</option>`).join("")}</select></label>
-      <label class="field"><span>Anno</span><input type="number" id="yearInput" value="${now.getFullYear()}" min="2000" max="2100"></label>
+      <label class="field"><span>Mese</span><select id="monthSelect" ${admin?"":"disabled"}>${MONTHS.map((m,i)=>`<option value="${i+1}" ${i===now.getMonth()?"selected":""}>${m}</option>`).join("")}</select></label>
+      <label class="field"><span>Anno</span><input type="number" id="yearInput" value="${now.getFullYear()}" min="2000" max="2100" ${admin?"":"disabled"}></label>
     </div>
-    <label class="field"><span>Note (opzionale)</span><textarea id="notesInput" placeholder="Varietà, data di trapianto, esito..."></textarea></label>
+    <label class="field"><span>Note (opzionale)</span><textarea id="notesInput" placeholder="Varietà, data di trapianto, esito..." ${admin?"":"disabled"}></textarea></label>
     <div id="warningZone"></div>
-    <button class="btn" id="saveBtn">Registra semina</button>
+    <button class="btn" id="saveBtn" ${admin?"":"disabled"}>Registra semina</button>
   `;
   function checkWarning(){
     const family = document.getElementById("cropSelect").selectedOptions[0]?.dataset.family;
@@ -425,21 +475,24 @@ function renderPiantaTab(){
       ? `<div class="warning-banner">⚠️ <div>Questa aiuola ha ospitato <strong>${conflict.last.family}</strong> (${conflict.last.cropName}) circa ${conflict.diffYears.toFixed(1)} anni fa — sotto i ${ROTATION_YEARS} anni consigliati.</div></div>`
       : "";
   }
-  document.getElementById("cropSelect").addEventListener("change", checkWarning);
-  document.getElementById("yearInput").addEventListener("change", checkWarning);
-  document.getElementById("monthSelect").addEventListener("change", checkWarning);
-  checkWarning();
-  document.getElementById("saveBtn").addEventListener("click", async ()=>{
-    if(!requireFirebase()) return;
-    const cropSelect = document.getElementById("cropSelect");
-    const cropName = cropSelect.value;
-    const family = cropSelect.selectedOptions[0]?.dataset.family || "Altro";
-    const year = parseInt(document.getElementById("yearInput").value, 10);
-    const month = parseInt(document.getElementById("monthSelect").value, 10);
-    const notes = document.getElementById("notesInput").value.trim();
-    await FB.addDoc(plantingsCol, { bedId:selectedBedId, cropName, family, year, month, notes, createdAt:Date.now() });
-    showToast("Semina registrata");
-  });
+  if(admin){
+    document.getElementById("cropSelect").addEventListener("change", checkWarning);
+    document.getElementById("yearInput").addEventListener("change", checkWarning);
+    document.getElementById("monthSelect").addEventListener("change", checkWarning);
+    checkWarning();
+    document.getElementById("saveBtn").addEventListener("click", async ()=>{
+      if(!requireAdmin()) return;
+      if(!firebaseReady){ showToast("Firebase non collegato"); return; }
+      const cropSelect = document.getElementById("cropSelect");
+      const cropName = cropSelect.value;
+      const family = cropSelect.selectedOptions[0]?.dataset.family || "Altro";
+      const year = parseInt(document.getElementById("yearInput").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const notes = document.getElementById("notesInput").value.trim();
+      await FB.addDoc(plantingsCol, { bedId:selectedBedId, cropName, family, year, month, notes, createdAt:Date.now() });
+      showToast("Semina registrata");
+    });
+  }
 }
 
 function renderStoricoTab(){
@@ -454,20 +507,58 @@ function renderStoricoTab(){
     </div>`).join("");
 }
 
+function renderAuthBox(){
+  const el = document.getElementById("authBox");
+  if(isAdmin()){
+    el.innerHTML = `<span class="auth-badge admin mono">👤 ${currentUser.email}</span><button class="btn small secondary" id="logoutBtn">Esci</button>`;
+    document.getElementById("logoutBtn").addEventListener("click", async ()=>{
+      await FBA.signOut(auth);
+      showToast("Disconnesso");
+    });
+  } else {
+    el.innerHTML = `<button class="btn small" id="loginOpenBtn">🔒 Accedi come amministratore</button>`;
+    document.getElementById("loginOpenBtn").addEventListener("click", ()=>{
+      document.getElementById("loginModalBackdrop").classList.add("open");
+    });
+  }
+}
+document.getElementById("closeLoginModal").addEventListener("click", ()=>{
+  document.getElementById("loginModalBackdrop").classList.remove("open");
+});
+document.getElementById("loginBtn").addEventListener("click", async ()=>{
+  const errEl = document.getElementById("loginError");
+  errEl.textContent = "";
+  if(!firebaseReady){ errEl.textContent = "Firebase non collegato."; return; }
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+  try{
+    await FBA.signInWithEmailAndPassword(auth, email, password);
+    document.getElementById("loginModalBackdrop").classList.remove("open");
+    showToast("Accesso effettuato");
+  }catch(err){
+    errEl.textContent = "Email o password non corrette.";
+  }
+});
+
 function renderCropModal(){
+  const admin = isAdmin();
   const list = document.getElementById("cropList");
   list.innerHTML = crops.map(c=>`
     <div class="crop-row"><span>${c.name} <span class="fam-tag">${c.family}</span></span>
-    <button class="btn danger-outline small" data-crop-id="${c.id}">Rimuovi</button></div>`).join("");
+    ${admin ? `<button class="btn danger-outline small" data-crop-id="${c.id}">Rimuovi</button>` : ""}</div>`).join("");
   list.querySelectorAll("button[data-crop-id]").forEach(btn=>{
     btn.addEventListener("click", async ()=>{
-      if(!requireFirebase()) return;
+      if(!requireAdmin()) return;
       await FB.deleteDoc(FB.doc(cropsCol, btn.dataset.cropId));
       showToast("Coltura rimossa");
     });
   });
-  const famSelect = document.getElementById("newCropFamily");
-  famSelect.innerHTML = Object.keys(FAMILY_COLORS).map(f=>`<option value="${f}">${f}</option>`).join("");
+  const formEl = document.getElementById("addCropForm");
+  formEl.style.display = admin ? "flex" : "none";
+  if(admin){
+    const famSelect = document.getElementById("newCropFamily");
+    famSelect.innerHTML = Object.keys(FAMILY_COLORS).map(f=>`<option value="${f}">${f}</option>`).join("");
+  }
 }
 document.getElementById("openCropsBtn").addEventListener("click", ()=>{
   document.getElementById("cropModalBackdrop").classList.add("open");
@@ -477,7 +568,7 @@ document.getElementById("closeCropModal").addEventListener("click", ()=>{
   document.getElementById("cropModalBackdrop").classList.remove("open");
 });
 document.getElementById("addCropBtn").addEventListener("click", async ()=>{
-  if(!requireFirebase()) return;
+  if(!requireAdmin()) return;
   const name = document.getElementById("newCropName").value.trim();
   const family = document.getElementById("newCropFamily").value;
   if(!name){ showToast("Inserisci un nome coltura"); return; }
@@ -522,9 +613,10 @@ function listenCrops(){
 }
 
 async function init(){
-  renderPaths();
   renderBeds();
+  renderLegend();
   renderPanel();
+  renderAuthBox();
   await setupFirebase();
   if(firebaseReady){
     await seedCropsIfEmpty();
