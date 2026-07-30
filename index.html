@@ -497,6 +497,7 @@ function renderPiantaTab(){
 
 function renderStoricoTab(){
   const el = document.getElementById("tabContent");
+  const admin = isAdmin();
   const list = plantings.filter(p=>p.bedId===selectedBedId).sort((a,b)=>(b.year*12+b.month)-(a.year*12+a.month));
   if(list.length===0){ el.innerHTML = `<div class="history-empty">Nessuna semina registrata ancora per questa aiuola.</div>`; return; }
   el.innerHTML = list.map(p=>`
@@ -504,7 +505,16 @@ function renderStoricoTab(){
       <div class="when mono">${MONTHS[p.month-1]} ${p.year}</div>
       <div class="what">${p.cropName} <span class="fam">· ${p.family}</span></div>
       ${p.notes ? `<div class="note">${p.notes}</div>` : ""}
+      ${admin ? `<button class="btn danger-outline small" style="margin-top:6px" data-planting-id="${p.id}">Elimina</button>` : ""}
     </div>`).join("");
+  el.querySelectorAll("button[data-planting-id]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      if(!requireAdmin()) return;
+      if(!firebaseReady){ showToast("Firebase non collegato"); return; }
+      await FB.deleteDoc(FB.doc(plantingsCol, btn.dataset.plantingId));
+      showToast("Semina eliminata");
+    });
+  });
 }
 
 function renderAuthBox(){
