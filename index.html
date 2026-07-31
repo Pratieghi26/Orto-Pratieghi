@@ -179,6 +179,7 @@
 
   <section class="card" id="sidePanel">
     <div class="top-actions">
+      <button class="btn secondary small" id="openFamilyBtn">📋 Vista per famiglia</button>
       <button class="btn secondary small" id="openCropsBtn">🌿 Gestisci colture</button>
     </div>
     <div id="panelContent">
@@ -198,6 +199,14 @@
     </div>
     <div id="loginError" class="auth-error"></div>
     <button class="btn" id="loginBtn">Accedi</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="familyModalBackdrop">
+  <div class="modal">
+    <span class="close-x" id="closeFamilyModal">✕ chiudi</span>
+    <h2>Dove ho piantato cosa</h2>
+    <div id="familyList"></div>
   </div>
 </div>
 
@@ -311,7 +320,7 @@ const FIXED_NAMES = {
 const FAMILY_COLORS = {
   "Solanacee":"#a8432f","Cucurbitacee":"#c99a2e","Leguminose":"#4b6b43","Brassicacee":"#7d8c5c",
   "Asteracee":"#8a5a44","Liliacee":"#9b6bb3","Ombrellifere":"#4c8a7a","Chenopodiacee":"#b3894a",
-  "Labiate":"#6f9b6b","Altro":"#b8ad8f"
+  "Labiate":"#6f9b6b","Maggese":"#9c9788","Altro":"#b8ad8f"
 };
 const DEFAULT_CROPS = [
   {name:"Pomodoro",family:"Solanacee"},{name:"Melanzana",family:"Solanacee"},{name:"Peperone",family:"Solanacee"},
@@ -323,7 +332,8 @@ const DEFAULT_CROPS = [
   {name:"Radicchio",family:"Asteracee"},{name:"Carciofo",family:"Asteracee"},{name:"Cipolla",family:"Liliacee"},
   {name:"Aglio",family:"Liliacee"},{name:"Porro",family:"Liliacee"},{name:"Carota",family:"Ombrellifere"},
   {name:"Sedano",family:"Ombrellifere"},{name:"Prezzemolo",family:"Ombrellifere"},{name:"Finocchio",family:"Ombrellifere"},
-  {name:"Bietola",family:"Chenopodiacee"},{name:"Spinacio",family:"Chenopodiacee"},{name:"Basilico",family:"Labiate"}
+  {name:"Bietola",family:"Chenopodiacee"},{name:"Spinacio",family:"Chenopodiacee"},{name:"Basilico",family:"Labiate"},
+  {name:"Maggese (riposo)",family:"Maggese"}
 ];
 const MONTHS = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
 const ROTATION_YEARS = 3;
@@ -550,7 +560,46 @@ document.getElementById("loginBtn").addEventListener("click", async ()=>{
   }
 });
 
-function renderCropModal(){
+function renderFamilyModal(){
+  const el = document.getElementById("familyList");
+  const now = new Date();
+  const nowIdx = now.getFullYear()*12 + (now.getMonth()+1);
+
+  const families = Object.keys(FAMILY_COLORS).filter(f=>f!=="Altro" && f!=="Maggese");
+  el.innerHTML = families.map(fam=>{
+    // per ogni aiuola, ultima semina di questa famiglia
+    const byBed = {};
+    plantings.filter(p=>p.family===fam).forEach(p=>{
+      const idx = p.year*12+p.month;
+      if(!byBed[p.bedId] || idx > byBed[p.bedId].idx){
+        byBed[p.bedId] = {...p, idx};
+      }
+    });
+    const rows = Object.values(byBed).sort((a,b)=>b.idx-a.idx);
+    const swatch = `<span class="legend-swatch" style="background:${FAMILY_COLORS[fam]}"></span>`;
+    if(rows.length===0){
+      return `<div style="margin-bottom:16px;"><div style="font-weight:600; margin-bottom:6px;">${swatch} ${fam}</div><div class="history-empty">Mai piantata finora.</div></div>`;
+    }
+    const rowsHtml = rows.map(r=>{
+      const diffYears = (nowIdx - r.idx)/12;
+      const risky = diffYears < ROTATION_YEARS;
+      return `<div class="history-item" style="border-left-color:${risky?'var(--danger)':'var(--leaf)'}">
+        <div class="when mono">${bedLabel(r.bedId)} · ${MONTHS[r.month-1]} ${r.year}</div>
+        <div class="what">${r.cropName} <span class="fam" style="color:${risky?'var(--danger)':'var(--leaf)'}">${risky ? `· da ruotare (${diffYears.toFixed(1)} anni fa)` : "· sicura da riusare"}</span></div>
+      </div>`;
+    }).join("");
+    return `<div style="margin-bottom:16px;"><div style="font-weight:600; margin-bottom:6px;">${swatch} ${fam}</div>${rowsHtml}</div>`;
+  }).join("");
+}
+document.getElementById("openFamilyBtn").addEventListener("click", ()=>{
+  document.getElementById("familyModalBackdrop").classList.add("open");
+  renderFamilyModal();
+});
+document.getElementById("closeFamilyModal").addEventListener("click", ()=>{
+  document.getElementById("familyModalBackdrop").classList.remove("open");
+});
+
+
   const admin = isAdmin();
   const list = document.getElementById("cropList");
   list.innerHTML = crops.map(c=>`
@@ -594,6 +643,11 @@ async function seedCropsIfEmpty(){
     const batch = FB.writeBatch(db);
     DEFAULT_CROPS.forEach(c=>{ const ref = FB.doc(cropsCol); batch.set(ref, c); });
     await batch.commit();
+  } else {
+    const hasMaggese = snap.docs.some(d => d.data().family === "Maggese");
+    if(!hasMaggese){
+      await FB.addDoc(cropsCol, {name:"Maggese (riposo)", family:"Maggese"});
+    }
   }
 }
 function listenBeds(){
@@ -611,6 +665,7 @@ function listenPlantings(){
     plantings = snap.docs.map(d=>({ id:d.id, ...d.data() }));
     renderBeds();
     if(selectedBedId && activeTab==="storico") renderStoricoTab();
+    if(document.getElementById("familyModalBackdrop").classList.contains("open")) renderFamilyModal();
   });
 }
 function listenCrops(){
