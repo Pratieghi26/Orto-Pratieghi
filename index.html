@@ -599,7 +599,7 @@ document.getElementById("closeFamilyModal").addEventListener("click", ()=>{
   document.getElementById("familyModalBackdrop").classList.remove("open");
 });
 
-
+function renderCropModal(){
   const admin = isAdmin();
   const list = document.getElementById("cropList");
   list.innerHTML = crops.map(c=>`
