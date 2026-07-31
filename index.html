@@ -355,10 +355,21 @@ function bedLabel(id){
   if(def && FIXED_NAMES[id]) return bedNames[id] || FIXED_NAMES[id];
   return bedNames[id] || (def ? def.num : id);
 }
+function nowPeriodIdx(){
+  const now = new Date();
+  return now.getFullYear()*12 + (now.getMonth()+1);
+}
 function latestPlantingForBed(bedId){
-  const list = plantings.filter(p=>p.bedId===bedId);
+  const nowIdx = nowPeriodIdx();
+  const list = plantings.filter(p=>p.bedId===bedId && (p.year*12+p.month) <= nowIdx);
   if(list.length===0) return null;
   return list.slice().sort((a,b)=>(b.year*12+b.month)-(a.year*12+a.month))[0];
+}
+function nextPlannedForBed(bedId){
+  const nowIdx = nowPeriodIdx();
+  const list = plantings.filter(p=>p.bedId===bedId && (p.year*12+p.month) > nowIdx);
+  if(list.length===0) return null;
+  return list.slice().sort((a,b)=>(a.year*12+a.month)-(b.year*12+b.month))[0];
 }
 function findFamilyConflict(bedId, family, year, month){
   const periodIdx = year*12+month;
@@ -390,6 +401,17 @@ function renderBeds(){
     rect.setAttribute("fill", color);
     rect.addEventListener("click", ()=> selectBed(bed.id));
     g.appendChild(rect);
+
+    if(bed.type==="bed" && nextPlannedForBed(bed.id)){
+      const dot = document.createElementNS("http://www.w3.org/2000/svg","circle");
+      dot.setAttribute("cx", bed.x+bed.w-8); dot.setAttribute("cy", bed.y+8);
+      dot.setAttribute("r", 5);
+      dot.setAttribute("fill", "#c99a2e");
+      dot.setAttribute("stroke", "#5b3a29");
+      dot.setAttribute("stroke-width", "1");
+      dot.setAttribute("pointer-events","none");
+      g.appendChild(dot);
+    }
 
     const label = document.createElementNS("http://www.w3.org/2000/svg","text");
     label.setAttribute("x", bed.x+bed.w/2); label.setAttribute("y", bed.y+bed.h/2-2);
@@ -481,9 +503,16 @@ function renderPiantaTab(){
     const month = parseInt(document.getElementById("monthSelect").value, 10);
     const conflict = findFamilyConflict(selectedBedId, family, year, month);
     const zone = document.getElementById("warningZone");
-    zone.innerHTML = conflict
-      ? `<div class="warning-banner">⚠️ <div>Questa aiuola ha ospitato <strong>${conflict.last.family}</strong> (${conflict.last.cropName}) circa ${conflict.diffYears.toFixed(1)} anni fa — sotto i ${ROTATION_YEARS} anni consigliati.</div></div>`
-      : "";
+    const isFuture = (year*12+month) > nowPeriodIdx();
+    let html = "";
+    if(isFuture){
+      html += `<div class="info-banner">🗓️ Questa data è futura: verrà salvata come pianificazione, non modificherà subito il colore dell'aiuola sulla mappa.</div>`;
+    }
+    if(conflict){
+      html += `<div class="warning-banner">⚠️ <div>Questa aiuola ha ospitato <strong>${conflict.last.family}</strong> (${conflict.last.cropName}) circa ${conflict.diffYears.toFixed(1)} anni fa — sotto i ${ROTATION_YEARS} anni consigliati.</div></div>`;
+    }
+    zone.innerHTML = html;
+    document.getElementById("saveBtn").textContent = isFuture ? "Pianifica semina" : "Registra semina";
   }
   if(admin){
     document.getElementById("cropSelect").addEventListener("change", checkWarning);
@@ -499,8 +528,10 @@ function renderPiantaTab(){
       const year = parseInt(document.getElementById("yearInput").value, 10);
       const month = parseInt(document.getElementById("monthSelect").value, 10);
       const notes = document.getElementById("notesInput").value.trim();
+      const isFuture = (year*12+month) > nowPeriodIdx();
       await FB.addDoc(plantingsCol, { bedId:selectedBedId, cropName, family, year, month, notes, createdAt:Date.now() });
-      showToast("Semina registrata");
+      showToast(isFuture ? "Semina pianificata" : "Semina registrata");
+      checkWarning();
     });
   }
 }
@@ -508,15 +539,32 @@ function renderPiantaTab(){
 function renderStoricoTab(){
   const el = document.getElementById("tabContent");
   const admin = isAdmin();
-  const list = plantings.filter(p=>p.bedId===selectedBedId).sort((a,b)=>(b.year*12+b.month)-(a.year*12+a.month));
-  if(list.length===0){ el.innerHTML = `<div class="history-empty">Nessuna semina registrata ancora per questa aiuola.</div>`; return; }
-  el.innerHTML = list.map(p=>`
-    <div class="history-item">
-      <div class="when mono">${MONTHS[p.month-1]} ${p.year}</div>
+  const nowIdx = nowPeriodIdx();
+  const all = plantings.filter(p=>p.bedId===selectedBedId).map(p=>({...p, idx:p.year*12+p.month}));
+  const future = all.filter(p=>p.idx>nowIdx).sort((a,b)=>a.idx-b.idx);
+  const past = all.filter(p=>p.idx<=nowIdx).sort((a,b)=>b.idx-a.idx);
+
+  function itemHtml(p, planned){
+    return `
+    <div class="history-item" ${planned ? 'style="border-left-color:#c99a2e;"' : ""}>
+      <div class="when mono">${planned ? "🗓️ " : ""}${MONTHS[p.month-1]} ${p.year}${planned ? " · pianificata" : ""}</div>
       <div class="what">${p.cropName} <span class="fam">· ${p.family}</span></div>
       ${p.notes ? `<div class="note">${p.notes}</div>` : ""}
       ${admin ? `<button class="btn danger-outline small" style="margin-top:6px" data-planting-id="${p.id}">Elimina</button>` : ""}
-    </div>`).join("");
+    </div>`;
+  }
+
+  if(all.length===0){ el.innerHTML = `<div class="history-empty">Nessuna semina registrata ancora per questa aiuola.</div>`; }
+  else {
+    let html = "";
+    if(future.length>0){
+      html += `<div style="font-weight:600; color:#5b3a29; margin-bottom:8px;">Programmate</div>`;
+      html += future.map(p=>itemHtml(p,true)).join("");
+      html += `<div style="font-weight:600; color:#5b3a29; margin:14px 0 8px;">Storico</div>`;
+    }
+    html += past.length>0 ? past.map(p=>itemHtml(p,false)).join("") : `<div class="history-empty">Nessuna semina passata registrata.</div>`;
+    el.innerHTML = html;
+  }
   el.querySelectorAll("button[data-planting-id]").forEach(btn=>{
     btn.addEventListener("click", async ()=>{
       if(!requireAdmin()) return;
